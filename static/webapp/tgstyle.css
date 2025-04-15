@@ -1,0 +1,791 @@
+/* Основные переменные */
+:root {
+    --tg-theme-bg-color: var(--tg-theme-bg-color, #ffffff);
+    --tg-theme-text-color: var(--tg-theme-text-color, #222222);
+    --tg-theme-hint-color: var(--tg-theme-hint-color, #999999);
+    --tg-theme-link-color: var(--tg-theme-link-color, #2481cc);
+    --tg-theme-button-color: var(--tg-theme-button-color, #2481cc);
+    --tg-theme-button-text-color: var(--tg-theme-button-text-color, #ffffff);
+    --tg-theme-secondary-bg-color: var(--tg-theme-secondary-bg-color, #f1f1f1);
+    
+    /* Дополнительные переменные для Rave-темы */
+    --rave-primary: #7a1b94;
+    --rave-primary-light: #b845ff;
+    --rave-primary-dark: #4e1b7a;
+    --rave-accent: #b845ff;
+    --rave-shadow: rgba(0, 0, 0, 0.2);
+    --rave-theme-warning: #FFA000;
+}
+
+/* Общие стили */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--tg-theme-bg-color);
+    color: var(--tg-theme-text-color);
+    font-size: 16px;
+    line-height: 1.5;
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+}
+
+/* Темная тема */
+body.dark {
+    --tg-theme-bg-color: #212121;
+    --tg-theme-text-color: #fff;
+    --tg-theme-hint-color: #aaa;
+    --tg-theme-link-color: #6ab7ff;
+    --tg-theme-button-color: #6ab7ff;
+    --tg-theme-button-text-color: #fff;
+    --tg-theme-secondary-bg-color: #181818;
+}
+
+/* Контейнер */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+/* Заголовки */
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--rave-primary) 0%, var(--rave-accent) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.header-subtitle {
+    font-size: 16px;
+    color: var(--tg-theme-hint-color);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    position: relative;
+    padding-left: 12px;
+}
+
+.section-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--rave-primary);
+    border-radius: 2px;
+}
+
+/* Комнаты */
+.rooms-section {
+    margin-bottom: 32px;
+}
+
+.rooms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.room-card {
+    background-color: var(--tg-theme-secondary-bg-color);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px var(--rave-shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.room-card:active {
+    transform: scale(0.98);
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.room-title {
+    font-weight: 600;
+    font-size: 17px;
+}
+
+.room-viewers {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.room-video {
+    font-size: 14px;
+    color: var(--tg-theme-hint-color);
+    margin-bottom: 16px;
+    word-break: break-all;
+}
+
+.room-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Кнопки */
+.tg-button {
+    background-color: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tg-button:active {
+    transform: scale(0.98);
+}
+
+.tg-button.primary {
+    background: linear-gradient(135deg, var(--rave-primary) 0%, var(--rave-accent) 100%);
+}
+
+/* Пустое состояние */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.empty-subtitle {
+    color: var(--tg-theme-hint-color);
+    margin-top: 8px;
+}
+
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    width: calc(100% - 32px);
+    max-width: 500px;
+    background-color: var(--tg-theme-bg-color);
+    border-radius: 16px;
+    overflow: hidden;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--tg-theme-secondary-bg-color);
+}
+
+.modal-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--tg-theme-hint-color);
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 16px;
+}
+
+/* Формы */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--tg-theme-hint-color);
+}
+
+.tg-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--tg-theme-secondary-bg-color);
+    border-radius: 8px;
+    background-color: var(--tg-theme-secondary-bg-color);
+    color: var(--tg-theme-text-color);
+    font-size: 16px;
+    transition: border-color 0.2s;
+}
+
+.tg-input:focus {
+    outline: none;
+    border-color: var(--rave-primary);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+/* Комната с видео */
+.video-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 соотношение сторон */
+    margin-bottom: 16px;
+    background-color: var(--tg-theme-secondary-bg-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Чат */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 50vh;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--tg-theme-secondary-bg-color);
+    margin-bottom: 16px;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.message {
+    margin-bottom: 12px;
+}
+
+.message-bubble {
+    display: inline-block;
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background-color: var(--tg-theme-bg-color);
+    box-shadow: 0 1px 2px var(--rave-shadow);
+}
+
+.message.outgoing {
+    text-align: right;
+}
+
+.message.outgoing .message-bubble {
+    background-color: var(--rave-primary);
+    color: white;
+}
+
+.message-info {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color);
+    margin-top: 4px;
+}
+
+.chat-input {
+    display: flex;
+    padding: 8px;
+    background-color: var(--tg-theme-bg-color);
+    border-top: 1px solid var(--tg-theme-secondary-bg-color);
+}
+
+.chat-input input {
+    flex-grow: 1;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 18px;
+    background-color: var(--tg-theme-secondary-bg-color);
+    color: var(--tg-theme-text-color);
+    margin-right: 8px;
+}
+
+.chat-input input:focus {
+    outline: none;
+}
+
+.chat-input button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--rave-primary);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Уведомление о VPN */
+.vpn-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid #ffc107;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+}
+
+.vpn-warning-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vpn-warning-text {
+    font-size: 14px;
+    color: var(--tg-theme-hint-color);
+}
+
+/* Иконки (для примера) */
+.icon-users:before {
+    content: '👥';
+}
+
+.icon-video:before {
+    content: '🎬';
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    .container {
+        padding: 12px;
+    }
+    
+    .header-title {
+        font-size: 22px;
+    }
+    
+    .section-title {
+        font-size: 17px;
+    }
+    
+    .room-title {
+        font-size: 16px;
+    }
+}
+
+/* Стили для страницы комнаты */
+.creator-badge {
+    color: var(--tg-theme-link-color);
+    font-weight: 500;
+}
+
+.vpn-warning {
+    background-color: rgba(255, 204, 0, 0.15);
+    border-left: 3px solid var(--rave-theme-warning);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 8px;
+}
+
+.vpn-warning-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--rave-theme-warning);
+}
+
+.vpn-warning-text {
+    color: var(--tg-theme-text-color);
+    margin: 0;
+    font-size: 14px;
+}
+
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* соотношение сторон 16:9 */
+    height: 0;
+    overflow: hidden;
+    margin: 16px 0;
+    border-radius: 12px;
+    background-color: #000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 12px;
+}
+
+.video-controls {
+    display: flex;
+    gap: 12px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+/* Иконки для кнопок */
+.icon-sync::before {
+    content: "🔄";
+    margin-right: 6px;
+}
+
+.icon-change::before {
+    content: "🎬";
+    margin-right: 6px;
+}
+
+.icon-share {
+    margin-right: 6px;
+}
+
+.icon-send {
+    display: inline-block;
+}
+
+/* Стили для чата комнаты */
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 20px 0 12px;
+    color: var(--tg-theme-text-color);
+}
+
+.chat-container {
+    background-color: var(--tg-theme-bg-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+    border: 1px solid var(--tg-theme-hint-color, rgba(0, 0, 0, 0.1));
+}
+
+.chat-messages {
+    max-height: 360px;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.message {
+    margin-bottom: 12px;
+    max-width: 85%;
+}
+
+.message.outgoing {
+    margin-left: auto;
+}
+
+.message-bubble {
+    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+    padding: 10px 14px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message.outgoing .message-bubble {
+    background-color: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+}
+
+.message-info {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color);
+    margin-top: 4px;
+    padding: 0 4px;
+}
+
+.empty-chat-message {
+    text-align: center;
+    color: var(--tg-theme-hint-color);
+    padding: 32px 16px;
+    font-style: italic;
+}
+
+.chat-input {
+    display: flex;
+    border-top: 1px solid var(--tg-theme-hint-color, rgba(0, 0, 0, 0.1));
+    padding: 8px 12px;
+}
+
+.chat-input input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 12px;
+    outline: none;
+    color: var(--tg-theme-text-color);
+}
+
+.chat-input input::placeholder {
+    color: var(--tg-theme-hint-color);
+}
+
+.chat-input button {
+    background: transparent;
+    border: none;
+    color: var(--tg-theme-button-color);
+    padding: 8px;
+    margin-left: 8px;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.chat-input button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.chat-input button:active {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.banned-message {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: #ff3b30;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    text-align: center;
+}
+
+.invite-section {
+    margin: 24px 0;
+}
+
+.wide-button {
+    width: 100%;
+    justify-content: center;
+    padding: 14px;
+}
+
+/* Дополнительные стили для модального окна изменения видео */
+#change-video-modal .modal-content {
+    max-width: 450px;
+}
+
+/* Анимация для страницы комнаты */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.container {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Медиа-запросы для адаптивности */
+@media (max-width: 768px) {
+    .video-controls {
+        flex-direction: column;
+    }
+    
+    .tg-button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-messages {
+        max-height: 300px;
+    }
+    
+    .message {
+        max-width: 90%;
+    }
+}
+
+/* Всплывающие уведомления (Toast) */
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    padding: 12px 20px;
+    border-radius: 12px;
+    color: white;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    max-width: 90%;
+    text-align: center;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast-success {
+    background-color: var(--rave-primary);
+    border-left: 4px solid var(--rave-primary-dark);
+}
+
+.toast-error {
+    background-color: #ff5252;
+    border-left: 4px solid #d32f2f;
+}
+
+@media (max-width: 480px) {
+    .toast {
+        width: 90%;
+        font-size: 14px;
+        padding: 10px 16px;
+    }
+}
+
+/* Дополнительные стили для модальных окон */
+.modal-content {
+    background-color: var(--tg-theme-bg-color, #ffffff);
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--tg-theme-hint-color, rgba(0, 0, 0, 0.2));
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--tg-theme-text-color, #000000);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--tg-theme-hint-color, rgba(0, 0, 0, 0.5));
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.close-modal:hover {
+    background-color: var(--tg-theme-secondary-bg-color, rgba(0, 0, 0, 0.05));
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.input-error {
+    color: var(--rave-theme-warning, #FFA000);
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+}
+
+/* Улучшения для мобильных устройств */
+@media (max-width: 480px) {
+    .toast {
+        font-size: 13px;
+        padding: 10px 16px;
+        bottom: 16px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 16px;
+    }
+    
+    .modal-header h3 {
+        font-size: 16px;
+    }
+} 

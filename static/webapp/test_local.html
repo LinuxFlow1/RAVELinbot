@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rave Bot - Тестовое окружение</title>
+    <link rel="stylesheet" href="tgstyle.css">
+    <style>
+        .test-panel {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            z-index: 9999;
+            font-size: 14px;
+        }
+        
+        .test-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .test-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            background: #555;
+        }
+        
+        /* Имитация Telegram WebApp */
+        #telegram-web-app-placeholder {
+            display: none;
+        }
+    </style>
+    <script>
+        // Мок для Telegram WebApp API
+        window.Telegram = {
+            WebApp: {
+                ready: function() { console.log('WebApp ready called'); },
+                expand: function() { console.log('WebApp expand called'); },
+                colorScheme: 'light',
+                MainButton: {
+                    text: 'Button',
+                    isVisible: false,
+                    setText: function(text) { 
+                        this.text = text; 
+                        console.log('MainButton setText:', text);
+                        document.getElementById('main-button-text').textContent = text;
+                    },
+                    show: function() { 
+                        this.isVisible = true; 
+                        console.log('MainButton show');
+                        document.getElementById('tg-main-button').style.display = 'block';
+                    },
+                    hide: function() { 
+                        this.isVisible = false; 
+                        console.log('MainButton hide');
+                        document.getElementById('tg-main-button').style.display = 'none';
+                    },
+                    showProgress: function() { 
+                        console.log('MainButton showProgress');
+                        document.getElementById('main-button-progress').style.display = 'inline-block';
+                    },
+                    hideProgress: function() { 
+                        console.log('MainButton hideProgress');
+                        document.getElementById('main-button-progress').style.display = 'none';
+                    },
+                    onClick: function(callback) {
+                        document.getElementById('tg-main-button').addEventListener('click', callback);
+                    }
+                },
+                BackButton: {
+                    isVisible: false,
+                    show: function() { 
+                        this.isVisible = true; 
+                        console.log('BackButton show');
+                        document.getElementById('tg-back-button').style.display = 'block';
+                    },
+                    hide: function() { 
+                        this.isVisible = false; 
+                        console.log('BackButton hide');
+                        document.getElementById('tg-back-button').style.display = 'none';
+                    },
+                    onClick: function(callback) {
+                        document.getElementById('tg-back-button').addEventListener('click', callback);
+                    }
+                },
+                showPopup: function(params) {
+                    console.log('showPopup called:', params);
+                    alert(params.title + '\n\n' + params.message);
+                },
+                showAlert: function(message) {
+                    console.log('showAlert called:', message);
+                    alert(message);
+                },
+                switchInlineQuery: function(query, targets) {
+                    console.log('switchInlineQuery called:', query, targets);
+                    alert('Поделиться: ' + query);
+                }
+            }
+        };
+
+        // Тестовые данные комнаты
+        const testRoom = {
+            id: "room123",
+            title: "Тестовая комната",
+            video_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            messages: [
+                {
+                    user_id: "user1",
+                    user_name: "Пользователь 1",
+                    text: "Привет всем!",
+                    timestamp: Math.floor(Date.now() / 1000) - 600
+                },
+                {
+                    user_id: "user2",
+                    user_name: "Пользователь 2",
+                    text: "Здравствуйте!",
+                    timestamp: Math.floor(Date.now() / 1000) - 500
+                }
+            ],
+            viewers: [
+                { id: "user1", name: "Пользователь 1" },
+                { id: "user2", name: "Пользователь 2" },
+                { id: "user3", name: "Пользователь 3" }
+            ]
+        };
+
+        // Эмуляция ответов API
+        function mockApiResponse(url, data) {
+            return new Promise((resolve) => {
+                console.log('Mock API call to:', url, 'with data:', data);
+                
+                // Имитируем задержку сети
+                setTimeout(() => {
+                    if (url.includes('/send_message')) {
+                        resolve({
+                            success: true,
+                            message: {
+                                user_id: "user3",
+                                user_name: "Вы",
+                                text: data.message,
+                                timestamp: Math.floor(Date.now() / 1000)
+                            }
+                        });
+                    } else if (url.includes('/update_video')) {
+                        resolve({
+                            success: true,
+                            need_vpn: data.video_url.includes('youtube')
+                        });
+                    } else if (url.includes('/sync_video')) {
+                        resolve({
+                            success: true
+                        });
+                    } else if (url.includes('/get_messages')) {
+                        resolve({
+                            success: true,
+                            messages: []
+                        });
+                    } else if (url.includes('/check_sync')) {
+                        resolve({
+                            success: true,
+                            need_sync: false,
+                            time: 0
+                        });
+                    } else {
+                        resolve({
+                            success: false,
+                            error: "Неизвестный запрос"
+                        });
+                    }
+                }, 300);
+            });
+        }
+
+        // Переопределяем fetch для эмуляции ответов сервера
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            if (url.toString().includes('/webapp/')) {
+                let data = {};
+                if (options && options.body) {
+                    try {
+                        data = JSON.parse(options.body);
+                    } catch (e) {
+                        console.error('Error parsing body:', e);
+                    }
+                }
+                return mockApiResponse(url, data).then(response => {
+                    return {
+                        ok: true,
+                        json: () => Promise.resolve(response)
+                    };
+                });
+            }
+            return originalFetch(url, options);
+        };
+
+        // Инициализация страницы
+        function init() {
+            // Для тестирования страницы комнаты
+            const isRoomPage = window.location.hash === '#room';
+            
+            // Для тестирования страницы со списком комнат
+            const isIndexPage = !isRoomPage;
+            
+            // Загружаем соответствующий шаблон
+            if (isRoomPage) {
+                document.body.innerHTML = generateRoomTemplate(testRoom);
+                document.body.setAttribute('data-room-id', testRoom.id);
+                document.body.setAttribute('data-room-title', testRoom.title);
+                document.body.setAttribute('data-is-creator', 'true');
+                document.body.setAttribute('data-is-banned', 'false');
+                document.body.setAttribute('data-user-id', 'user3');
+                document.body.setAttribute('data-bot-username', 'test_bot');
+                
+                // Эмулируем предзагруженные переменные из Jinja
+                window.userIdStr = "user3";
+                window.roomIdStr = testRoom.id;
+                window.isCreatorStr = "true";
+                window.isBannedStr = "false";
+                window.botUsername = "test_bot";
+            } else {
+                document.body.innerHTML = generateIndexTemplate([testRoom]);
+                document.body.setAttribute('data-user-id', 'user3');
+                
+                // Эмулируем предзагруженные переменные из Jinja
+                window.userIdStr = "user3";
+            }
+            
+            // Добавляем панель тестирования
+            appendTestPanel(isRoomPage);
+            
+            // Эмулируем инициализацию Telegram WebApp
+            if (isRoomPage) {
+                // Загружаем скрипт room.js
+                const script = document.createElement('script');
+                script.src = 'room.js';
+                document.body.appendChild(script);
+            }
+        }
+
+        // Шаблон для страницы комнаты
+        function generateRoomTemplate(room) {
+            return `
+            <div id="telegram-web-app-placeholder">
+                <button id="tg-back-button" style="display: none;">Назад</button>
+                <button id="tg-main-button" style="display: none;">
+                    <span id="main-button-text">Кнопка</span>
+                    <span id="main-button-progress" style="display: none;">⏳</span>
+                </button>
+            </div>
+            
+            <div class="container">
+                <div class="header">
+                    <h1 class="header-title">${room.title}</h1>
+                    <p class="header-subtitle">
+                        Участников: ${room.viewers.length}
+                        <span class="creator-badge"> • Вы создатель</span>
+                    </p>
+                </div>
+
+                <div class="video-container" id="video-container" data-video-url="${room.video_url}">
+                    <iframe src="${room.video_url}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+
+                <div class="video-controls">
+                    <button id="sync-btn" class="tg-button">
+                        <span class="icon-sync">⏱️</span> Синхронизировать
+                    </button>
+                    
+                    <button id="change-video-btn" class="tg-button primary">
+                        <span class="icon-change">🎬</span> Сменить видео
+                    </button>
+                </div>
+
+                <h2 class="section-title">Чат комнаты</h2>
+                
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        ${room.messages.map(msg => `
+                            <div class="message ${msg.user_id === 'user3' ? 'outgoing' : ''}" data-timestamp="${msg.timestamp}" data-user-id="${msg.user_id}">
+                                <div class="message-bubble">${msg.text}</div>
+                                <div class="message-info">
+                                    ${msg.user_name}, ${formatTimeForDisplay(msg.timestamp)}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <form class="chat-input" id="chat-form">
+                        <input type="text" id="message-input" placeholder="Сообщение...">
+                        <button type="submit">
+                            <span class="icon-send">📤</span>
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="invite-section">
+                    <button id="share-btn" class="tg-button primary wide-button">
+                        <span class="icon-share">🔗</span> Пригласить друзей
+                    </button>
+                </div>
+            </div>
+            
+            <div class="modal" id="change-video-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Сменить видео</h2>
+                        <button class="close-btn" id="close-video-modal-btn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="change-video-form">
+                            <div class="form-group">
+                                <label for="new_video_url">Ссылка на новое видео</label>
+                                <input type="text" id="new_video_url" name="new_video_url" class="tg-input" placeholder="Вставьте ссылку на видео" required>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="tg-button primary">Обновить видео</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // Шаблон для главной страницы
+        function generateIndexTemplate(rooms) {
+            return `
+            <div id="telegram-web-app-placeholder">
+                <button id="tg-back-button" style="display: none;">Назад</button>
+                <button id="tg-main-button" style="display: none;">
+                    <span id="main-button-text">Кнопка</span>
+                    <span id="main-button-progress" style="display: none;">⏳</span>
+                </button>
+            </div>
+            
+            <div class="container">
+                <header class="header">
+                    <h1 class="header-title">Rave Bot</h1>
+                    <p class="header-subtitle">Совместный просмотр видео</p>
+                </header>
+
+                <div class="rooms-section">
+                    <h2 class="section-title">Активные комнаты</h2>
+                    
+                    <div class="rooms-list" id="rooms-list">
+                        ${rooms.map(room => `
+                            <div class="room-card" data-room-id="${room.id}">
+                                <div class="room-header">
+                                    <div class="room-title">${room.title}</div>
+                                    <div class="room-viewers">
+                                        <i class="icon-users">👥</i> ${room.viewers.length}
+                                    </div>
+                                </div>
+                                <div class="room-video">
+                                    <i class="icon-video">🎬</i> ${room.video_url}
+                                </div>
+                                <div class="room-actions">
+                                    <button class="tg-button join-room-btn" data-room-id="${room.id}">
+                                        Присоединиться
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal" id="create-room-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Создать комнату</h2>
+                        <button class="close-btn" id="close-modal-btn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="create-room-form">
+                            <div class="form-group">
+                                <label for="video_url">Ссылка на видео</label>
+                                <input type="text" id="video_url" name="video_url" class="tg-input" placeholder="Вставьте ссылку на видео" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="title">Название комнаты (опционально)</label>
+                                <input type="text" id="title" name="title" class="tg-input" placeholder="Введите название комнаты">
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="tg-button primary">Создать комнату</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // Добавляем панель тестирования
+        function appendTestPanel(isRoomPage) {
+            const panel = document.createElement('div');
+            panel.className = 'test-panel';
+            
+            panel.innerHTML = `
+                <h3>Тестовая панель</h3>
+                <div class="test-controls">
+                    <button class="test-btn" id="test-toggle-theme">Сменить тему</button>
+                    ${isRoomPage ? `
+                        <button class="test-btn" id="test-add-message">Добавить сообщение</button>
+                        <button class="test-btn" id="test-sync-video">Эмуляция синхронизации</button>
+                        <a href="#" class="test-btn">На главную</a>
+                    ` : `
+                        <a href="#room" class="test-btn">В комнату</a>
+                    `}
+                </div>
+            `;
+            
+            document.body.appendChild(panel);
+            
+            // Обработчики для тестовой панели
+            document.getElementById('test-toggle-theme').addEventListener('click', function() {
+                const newTheme = document.body.className === 'dark' ? 'light' : 'dark';
+                document.body.className = newTheme;
+                window.Telegram.WebApp.colorScheme = newTheme;
+            });
+            
+            if (isRoomPage) {
+                document.getElementById('test-add-message').addEventListener('click', function() {
+                    // Эмуляция нового сообщения
+                    const messages = [
+                        { user_id: 'user1', username: 'Пользователь 1', text: 'Новое тестовое сообщение!', timestamp: Math.floor(Date.now() / 1000) },
+                        { user_id: 'user2', username: 'Пользователь 2', text: 'Привет всем!', timestamp: Math.floor(Date.now() / 1000) }
+                    ];
+                    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                    
+                    if (typeof addMessageToChat === 'function') {
+                        addMessageToChat(randomMessage);
+                    } else {
+                        // Ручное добавление сообщения, если функция недоступна
+                        const chatMessages = document.getElementById('chat-messages');
+                        if (chatMessages) {
+                            const messageEl = document.createElement('div');
+                            messageEl.className = 'message';
+                            messageEl.setAttribute('data-timestamp', randomMessage.timestamp);
+                            messageEl.setAttribute('data-user-id', randomMessage.user_id);
+                            
+                            messageEl.innerHTML = `
+                                <div class="message-bubble">${randomMessage.text}</div>
+                                <div class="message-info">
+                                    ${randomMessage.username}, ${formatTimeForDisplay(randomMessage.timestamp)}
+                                </div>
+                            `;
+                            
+                            chatMessages.appendChild(messageEl);
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
+                    }
+                });
+                
+                document.getElementById('test-sync-video').addEventListener('click', function() {
+                    // Эмуляция синхронизации видео
+                    if (typeof showToast === 'function') {
+                        showToast('Видео синхронизировано');
+                    } else {
+                        alert('Видео синхронизировано');
+                    }
+                });
+            }
+        }
+
+        // Форматирование времени для отображения
+        function formatTimeForDisplay(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        // Запуск инициализации при загрузке страницы
+        window.addEventListener('DOMContentLoaded', init);
+        
+        // Перезагрузка при изменении хэша в URL
+        window.addEventListener('hashchange', function() {
+            location.reload();
+        });
+    </script>
+</head>
+<body>
+    <!-- Контент будет загружен динамически через JavaScript -->
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <p>Загрузка тестового окружения...</p>
+    </div>
+</body>
+</html> 

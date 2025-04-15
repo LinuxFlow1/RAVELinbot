@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rave Bot - Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .debug-info {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .debug-item {
+            margin-bottom: 8px;
+        }
+        .button {
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body data-user-id="{{ user_id }}">
+    <div class="container">
+        <div class="header">
+            <h1>RAVE Bot - Диагностика</h1>
+            <p>Страница для отладки проблем с WebApp</p>
+        </div>
+
+        <div class="debug-info" id="debug-info">
+            <h2>Информация о WebApp</h2>
+            <div class="debug-item">Загрузка данных...</div>
+        </div>
+
+        <button class="button" id="create-btn">Создать комнату</button>
+        <button class="button" id="test-btn">Тестовый запрос</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Попытка инициализации Telegram WebApp
+            let tgInfo = "Telegram WebApp не инициализирован";
+            let userId = "{{ user_id }}";
+            let debugInfo = document.getElementById('debug-info');
+            
+            try {
+                let tg = window.Telegram.WebApp;
+                tg.expand();
+                
+                // Получаем информацию о WebApp
+                tgInfo = `
+                    <div class="debug-item"><strong>Версия:</strong> ${tg.version}</div>
+                    <div class="debug-item"><strong>Платформа:</strong> ${tg.platform}</div>
+                    <div class="debug-item"><strong>Цветовая схема:</strong> ${tg.colorScheme}</div>
+                    <div class="debug-item"><strong>User ID:</strong> ${userId}</div>
+                    <div class="debug-item"><strong>Инициатор:</strong> ${tg.initDataUnsafe.user?.id || 'Нет данных'}</div>
+                    <div class="debug-item"><strong>Init Data:</strong> ${tg.initData}</div>
+                `;
+
+                // Добавляем обработчики кнопок
+                document.getElementById('create-btn').addEventListener('click', function() {
+                    tg.showAlert("Функция создания комнаты пока отключена для диагностики");
+                });
+
+                document.getElementById('test-btn').addEventListener('click', function() {
+                    fetch('/webapp/test')
+                        .then(response => response.text())
+                        .then(data => {
+                            tg.showAlert("Результат запроса: " + data);
+                        })
+                        .catch(error => {
+                            tg.showAlert("Ошибка запроса: " + error);
+                        });
+                });
+            } catch (e) {
+                tgInfo = `
+                    <div class="debug-item"><strong>Ошибка инициализации:</strong> ${e.message}</div>
+                    <div class="debug-item"><strong>User ID:</strong> ${userId}</div>
+                `;
+            }
+            
+            // Обновляем отладочную информацию
+            debugInfo.innerHTML = `
+                <h2>Информация о WebApp</h2>
+                ${tgInfo}
+            `;
+        });
+    </script>
+</body>
+</html> 

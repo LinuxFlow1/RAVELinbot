@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестирование WebApp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .iframe-container {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Тестирование Telegram WebApp</h1>
+        <p>Эта страница эмулирует работу Telegram WebApp для отладки</p>
+    </div>
+    
+    <div class="container">
+        <div class="iframe-container">
+            <iframe id="webapp-frame" src="about:blank"></iframe>
+        </div>
+        
+        <div>
+            <button class="button" onclick="loadIndex()">Загрузить WebApp</button>
+            <button class="button" onclick="loadDirect()">Загрузить Direct</button>
+            <button class="button" onclick="loadTest()">Загрузить Test</button>
+        </div>
+    </div>
+
+    <script>
+        // Эмуляция Telegram WebApp API
+        function createTelegramWebApp() {
+            // Определяем глобальный объект Telegram с WebApp
+            window.Telegram = {
+                WebApp: {
+                    initData: "user=%7B%22id%22%3A123456789%7D",
+                    initDataUnsafe: {
+                        user: {
+                            id: 123456789,
+                            first_name: "Тестовый",
+                            last_name: "Пользователь",
+                            username: "test_user"
+                        }
+                    },
+                    version: "6.0",
+                    platform: "web",
+                    colorScheme: "light",
+                    viewportHeight: 600,
+                    viewportStableHeight: 600,
+                    
+                    expand: function() {
+                        console.log("WebApp.expand вызван");
+                    },
+                    
+                    showAlert: function(message) {
+                        alert(message);
+                    },
+                    
+                    MainButton: {
+                        setText: function(text) {
+                            console.log("MainButton.setText:", text);
+                        },
+                        show: function() {
+                            console.log("MainButton.show вызван");
+                        },
+                        hide: function() {
+                            console.log("MainButton.hide вызван");
+                        },
+                        onClick: function(callback) {
+                            console.log("MainButton.onClick установлен");
+                            this._callback = callback;
+                        },
+                        showProgress: function() {
+                            console.log("MainButton.showProgress вызван");
+                        },
+                        hideProgress: function() {
+                            console.log("MainButton.hideProgress вызван");
+                        },
+                        _callback: null
+                    }
+                }
+            };
+
+            // Инъекция объекта Telegram в iframe
+            var iframe = document.getElementById('webapp-frame');
+            iframe.onload = function() {
+                try {
+                    iframe.contentWindow.Telegram = window.Telegram;
+                    console.log("Telegram WebApp API успешно внедрен в iframe");
+                } catch (e) {
+                    console.error("Ошибка при внедрении Telegram WebApp API:", e);
+                }
+            };
+        }
+
+        // Инициализация
+        createTelegramWebApp();
+
+        // Функции для загрузки различных URL
+        function loadIndex() {
+            document.getElementById('webapp-frame').src = "http://localhost:5000/webapp?user_id=123456789";
+        }
+
+        function loadDirect() {
+            document.getElementById('webapp-frame').src = "http://localhost:5000/direct";
+        }
+
+        function loadTest() {
+            document.getElementById('webapp-frame').src = "http://localhost:5000/webapp/test";
+        }
+    </script>
+</body>
+</html> 

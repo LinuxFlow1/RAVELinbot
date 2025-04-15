@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ room.title }} - Rave Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 соотношение сторон */
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background-color: var(--primary-dark);
+            box-shadow: 0 4px 15px var(--shadow);
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .notification {
+            position: fixed;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: var(--text-light);
+            padding: 12px 20px;
+            border-radius: 25px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px var(--shadow);
+            transition: top 0.3s ease;
+            border: 1px solid var(--pearlescent);
+        }
+        
+        .notification.show {
+            top: 20px;
+        }
+        
+        .room-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .room-title-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        
+        .room-title-wrapper .room-title {
+            margin-bottom: 0;
+            margin-right: 10px;
+        }
+        
+        .viewers-count {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 5px 12px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="text-center mb-4">
+            <h1 class="pearlescent">Rave Bot</h1>
+            <p>Совместный просмотр видео в Telegram</p>
+        </header>
+
+        <div class="card">
+            <div class="room-info">
+                <div class="room-title-wrapper">
+                    <h2 class="room-title">{{ room.title }}</h2>
+                    {% if is_creator %}
+                        <span class="creator-badge">👑</span>
+                    {% endif %}
+                </div>
+                <div class="viewers-count">
+                    <i class="fas fa-users"></i>
+                    <span id="viewers-count">{{ room.viewers|length }}</span>
+                </div>
+            </div>
+            
+            <div class="video-container">
+                <iframe src="{{ room.video_url }}" allowfullscreen></iframe>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="share-btn" class="btn secondary">
+                    <i class="fas fa-share-alt"></i> Поделиться
+                </button>
+                
+                {% if is_creator %}
+                    <button id="change-video-btn" class="btn primary">
+                        <i class="fas fa-exchange-alt"></i> Сменить видео
+                    </button>
+                {% endif %}
+                
+                <a href="{{ url_for('index') }}" class="btn">
+                    <i class="fas fa-home"></i> На главную
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Чат комнаты</h2>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    {% for message in room.messages %}
+                        <div class="message {% if message.user_id == user_id %}outgoing{% endif %}">
+                            <div class="message-bubble">{{ message.text }}</div>
+                            <div class="message-info">
+                                {{ message.user_name }}, {{ message.timestamp|format_time }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <form class="chat-input" id="chat-form">
+                    <input type="text" id="message-input" placeholder="Введите сообщение..." {% if is_banned %}disabled{% endif %}>
+                    <button type="submit" {% if is_banned %}disabled{% endif %}>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+            
+            {% if is_banned %}
+                <div class="text-center mt-4">
+                    <p class="danger-text">Вы заблокированы в этой комнате и не можете отправлять сообщения.</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if is_creator %}
+            <div class="card">
+                <h2>Управление комнатой</h2>
+                
+                <div class="form-group">
+                    <label for="new-video-url">Ссылка на новое видео</label>
+                    <input type="text" id="new-video-url" class="form-control" placeholder="Вставьте ссылку на видео">
+                </div>
+                
+                <button id="update-video-btn" class="btn primary">
+                    <i class="fas fa-save"></i> Обновить видео
+                </button>
+                
+                <div class="mt-4">
+                    <h3>Заблокированные пользователи</h3>
+                    {% if room.banned_users %}
+                        <ul class="banned-list">
+                            {% for user_id in room.banned_users %}
+                                <li>
+                                    ID: {{ user_id }}
+                                    <button class="btn danger unban-btn" data-user-id="{{ user_id }}">
+                                        Разблокировать
+                                    </button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Нет заблокированных пользователей.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="share-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Поделиться комнатой</h2>
+            <p>Отправьте эту ссылку друзьям, чтобы пригласить их в комнату:</p>
+            <div class="form-group">
+                <input type="text" id="share-link" class="form-control" value="{{ share_link }}" readonly>
+            </div>
+            <button id="copy-link-btn" class="btn primary">
+                <i class="fas fa-copy"></i> Копировать ссылку
+            </button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+    <script>
+        // Код для управления модальным окном
+        const shareBtn = document.getElementById('share-btn');
+        const shareModal = document.getElementById('share-modal');
+        const closeBtn = document.querySelector('.close');
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        const shareLink = document.getElementById('share-link');
+        
+        if (shareBtn) {
+            shareBtn.addEventListener('click', () => {
+                playSound('click');
+                shareModal.style.display = 'block';
+            });
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                shareModal.style.display = 'none';
+            });
+        }
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === shareModal) {
+                shareModal.style.display = 'none';
+            }
+        });
+        
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', () => {
+                playSound('success');
+                shareLink.select();
+                document.execCommand('copy');
+                
+                // Изменяем текст кнопки на время
+                const originalText = copyLinkBtn.innerHTML;
+                copyLinkBtn.innerHTML = '<i class="fas fa-check"></i> Скопировано!';
+                
+                setTimeout(() => {
+                    copyLinkBtn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+        
+        // Обновление видео (для владельца комнаты)
+        const updateVideoBtn = document.getElementById('update-video-btn');
+        const newVideoUrlInput = document.getElementById('new-video-url');
+        
+        if (updateVideoBtn && newVideoUrlInput) {
+            updateVideoBtn.addEventListener('click', () => {
+                const newUrl = newVideoUrlInput.value.trim();
+                
+                if (newUrl) {
+                    playSound('click');
+                    
+                    // Здесь будет AJAX-запрос для обновления видео
+                    fetch('/update_video', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            room_id: '{{ room.id }}',
+                            video_url: newUrl
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            playSound('success');
+                            // Обновляем iframe с видео
+                            document.querySelector('.video-container iframe').src = newUrl;
+                            newVideoUrlInput.value = '';
+                            
+                            // Показываем уведомление
+                            const notification = document.createElement('div');
+                            notification.className = 'notification';
+                            notification.innerText = 'Видео успешно обновлено!';
+                            
+                            document.body.appendChild(notification);
+                            
+                            setTimeout(() => {
+                                notification.classList.add('show');
+                            }, 10);
+                            
+                            setTimeout(() => {
+                                notification.classList.remove('show');
+                                setTimeout(() => {
+                                    notification.remove();
+                                }, 300);
+                            }, 3000);
+                        } else {
+                            playSound('error');
+                            alert('Ошибка обновления видео: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        playSound('error');
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при обновлении видео.');
+                    });
+                }
+            });
+        }
+        
+        // Обработка отправки сообщений в чате
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const chatMessages = document.getElementById('chat-messages');
+        
+        if (chatForm && messageInput && chatMessages) {
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const message = messageInput.value.trim();
+                
+                if (message) {
+                    playSound('message');
+                    
+                    // Здесь будет AJAX-запрос для отправки сообщения
+                    fetch('/send_message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            room_id: '{{ room.id }}',
+                            message: message
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Сообщение успешно отправлено, очищаем поле ввода
+                            messageInput.value = '';
+                            
+                            // Добавляем сообщение в чат
+                            addMessage(message, true);
+                        } else {
+                            playSound('error');
+                            alert('Ошибка отправки сообщения: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        playSound('error');
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при отправке сообщения.');
+                    });
+                }
+            });
+        }
+        
+        // Разблокировка пользователей
+        const unbanButtons = document.querySelectorAll('.unban-btn');
+        
+        unbanButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const userId = button.dataset.userId;
+                
+                if (userId) {
+                    playSound('click');
+                    
+                    // Здесь будет AJAX-запрос для разблокировки пользователя
+                    fetch('/unban_user', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            room_id: '{{ room.id }}',
+                            user_id: userId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            playSound('success');
+                            // Удаляем элемент из списка
+                            button.parentElement.remove();
+                            
+                            // Показываем уведомление
+                            const notification = document.createElement('div');
+                            notification.className = 'notification';
+                            notification.innerText = 'Пользователь разблокирован!';
+                            
+                            document.body.appendChild(notification);
+                            
+                            setTimeout(() => {
+                                notification.classList.add('show');
+                            }, 10);
+                            
+                            setTimeout(() => {
+                                notification.classList.remove('show');
+                                setTimeout(() => {
+                                    notification.remove();
+                                }, 300);
+                            }, 3000);
+                        } else {
+                            playSound('error');
+                            alert('Ошибка разблокировки пользователя: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        playSound('error');
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при разблокировке пользователя.');
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

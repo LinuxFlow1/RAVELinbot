@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAVE Bot - Диагностика</title>
+    <link rel="stylesheet" href="/static/webapp/tgstyle.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>RAVE Bot - Диагностика</h1>
+        <div class="info-block">
+            <h2>Информация о WebApp</h2>
+            <p>Версия: 8.0</p>
+            <p>Платформа: <span id="platform">Загрузка...</span></p>
+            <p>Тема: <span id="colorScheme">Загрузка...</span></p>
+        </div>
+
+        <div class="info-block">
+            <h2>Состояние подключения</h2>
+            <p>WebApp API: <span id="webAppStatus">Проверка...</span></p>
+            <p>Бот API: <span id="botStatus">Проверка...</span></p>
+        </div>
+
+        <div class="info-block">
+            <h2>Тестовые функции</h2>
+            <button onclick="testCreateRoom()" class="button">Тест создания комнаты</button>
+            <button onclick="testWebApp()" class="button">Тест WebApp API</button>
+        </div>
+
+        <div id="result" class="info-block" style="display: none;">
+            <h2>Результат теста</h2>
+            <pre id="resultText"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Заполняем информацию о платформе
+        document.getElementById('platform').textContent = tg.platform || 'Неизвестно';
+        document.getElementById('colorScheme').textContent = tg.colorScheme || 'Неизвестно';
+
+        // Проверяем статус WebApp
+        if (tg.initDataUnsafe && tg.initData) {
+            document.getElementById('webAppStatus').textContent = 'OK';
+            document.getElementById('webAppStatus').style.color = 'green';
+        } else {
+            document.getElementById('webAppStatus').textContent = 'Ошибка';
+            document.getElementById('webAppStatus').style.color = 'red';
+        }
+
+        // Функция для тестирования создания комнаты
+        async function testCreateRoom() {
+            try {
+                const response = await fetch('/webapp/test', {
+                    method: 'GET'
+                });
+                
+                const result = await response.text();
+                showResult('Тест API: ' + result);
+                
+                document.getElementById('botStatus').textContent = 'OK';
+                document.getElementById('botStatus').style.color = 'green';
+            } catch (error) {
+                showResult('Ошибка: ' + error.message);
+                document.getElementById('botStatus').textContent = 'Ошибка';
+                document.getElementById('botStatus').style.color = 'red';
+            }
+        }
+
+        // Функция для тестирования WebApp API
+        function testWebApp() {
+            const result = {
+                platform: tg.platform,
+                colorScheme: tg.colorScheme,
+                viewportHeight: tg.viewportHeight,
+                viewportStableHeight: tg.viewportStableHeight,
+                initData: tg.initData ? 'Получены' : 'Отсутствуют',
+                version: tg.version
+            };
+            
+            showResult('WebApp API:\n' + JSON.stringify(result, null, 2));
+        }
+
+        // Функция для отображения результатов
+        function showResult(text) {
+            const resultBlock = document.getElementById('result');
+            const resultText = document.getElementById('resultText');
+            resultBlock.style.display = 'block';
+            resultText.textContent = text;
+        }
+
+        // Сообщаем о готовности приложения
+        tg.ready();
+    </script>
+</body>
+</html> 
